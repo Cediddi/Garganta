@@ -5,6 +5,13 @@ setup(
     name='Garganta',
     version='1',
     packages=['garganta', 'garganta.sites'],
+    install_requires=[
+        "Mechanize",
+        "beautifulsoup4",
+        "awesome-slugify",
+        "appdirs",
+        "wget",
+    ],
     url='www.umutkarci.com',
     license='GPL v2',
     author='cediddi',
