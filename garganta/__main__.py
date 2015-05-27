@@ -11,8 +11,6 @@ import downloader
 import filemanager
 import scrapper
 from filemanager import mkdir_p
-
-
 def load_conf():
     if os.path.exists(config_file):
         try:
@@ -33,19 +31,15 @@ def download_episode(m, *es):
     downloader.DOWNLOAD_PATH = conf["download_dir"]
     for e in es:
         manga, episode, title, pages = adapter.get_pages(name=m, no=e)
-        folder = filemanager.create_folder(manga, "{e} - {en}".format(
+        folder = filemanager.create_folder(manga, u"{e} - {en}".format(
             e=episode, en=title))
 
-        print u"{m} - #{e} {en} added to download queue\n\n".format(
-            p=len(pages), m=manga, e=episode, t=title)
-
+        print u"{m} - #{e} {t} added to download queue".format(
+            m=manga, e=episode, t=title)
         for page in pages:
             downloader.download_list.append((page, folder))
 
-        downloader.start_download()
-
-    if len(downloader.download_list) and not downloader.pool_running:
-        downloader.start_download()
+    downloader.start_download()
 
 
 def init_parser():
@@ -111,7 +105,7 @@ def main():
                         p=len(pages), m=manga, e=episode, t=title)
             else:
                 cachefile = os.path.join(
-                    cachedir, "{s}_{m}_episodes.json".format(
+                    cachedir, u"{s}_{m}_episodes.json".format(
                         s=adapter.slugify(args["site"]),
                         m=adapter.slugify(args["manga"])))
                 if os.path.exists(cachefile) and args["force"] is False:
@@ -128,7 +122,7 @@ def main():
                 for ep in eps:
                     print ep
         else:
-            cachefile = os.path.join(cachedir, "{s}_mangas.json".format(
+            cachefile = os.path.join(cachedir, u"{s}_mangas.json".format(
                 s=adapter.slugify(args["site"])))
             if os.path.exists(cachefile) and args["force"] is False:
                 try:
@@ -149,7 +143,7 @@ def main():
             conf.update({"download_dir": args["download_path"]})
             download_episode(args["manga"], *args["episode"])
         else:
-            cachefile = os.path.join(cachedir, "{s}_{m}_info.json".format(
+            cachefile = os.path.join(cachedir, u"{s}_{m}_info.json".format(
                 s=adapter.slugify(args["site"]),
                 m=adapter.slugify(args["manga"])))
             if os.path.exists(cachefile) and args["force"] is False:
@@ -169,3 +163,6 @@ def main():
         parser.error("----download-path requires --episode")
     else:
         parser.print_help()
+
+if __name__ == '__main__':
+    main()

@@ -9,41 +9,41 @@ from threading import current_thread
 from functools import partial
 
 download_list = deque()
+done_downloads = 0
 pool = ThreadPool(3)
-pool_running = False
 
 bar_dict = {}
 prev_line_len = 0
 
 
 def general_bar(current, total, _=None, name=None, thread=None):
-    global bar_dict, prev_line_len
+    global bar_dict, prev_line_len, done_downloads
     bar_dict[thread] = name, current, total
-    bar = "".join(map(lambda x:
-                      "[{file} {current}KiB/{total}KiB({percent}%)]".format(
+    bar = u"".join(map(lambda x:
+                      u"[{file} {current}KiB/{total}KiB({percent}%)]".format(
                           file=x[0], current=x[1] / 1024, total=x[2] / 1024,
                           percent=x[1] * 100 / x[2]),
                       bar_dict.values()))
-    print(bar, end="")
+    bar += " Queue = {}".format(len(download_list) - done_downloads)
     print("\r" * prev_line_len, end="")
-    print(" " * prev_line_len, end="")
-    prev_line_len = len(bar)
+    line_len = len(bar)
+    if prev_line_len > len(bar):
+        bar += " " * (prev_line_len - len(bar))
+    print(bar, end="")
+    prev_line_len = line_len
 
 
 def download_worker(q):
+    global done_downloads
     url, path = q
     br = partial(general_bar, name=url.split("/")[-1], thread=current_thread())
     download(url, path, br)
+    done_downloads += 1
 
 
 def stop_download():
-    global pool_running
     pool.join()
-    pool_running = False
 
 
 def start_download():
-    global pool_running
-    pool_running = True
-    pool.imap(download_worker, download_list)
-    pool_running = False
+    pool.map(download_worker, download_list)
