@@ -1,0 +1,4 @@
+Mechanize
+beautifulsoup4
+awesome-slugify
+appdirs
