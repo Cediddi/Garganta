@@ -3,14 +3,14 @@ from setuptools import setup
 
 setup(
     name='Garganta',
-    version='1',
-    packages=['garganta', 'garganta.sites'],
+    version='2',
+    packages=['garganta', 'garganta.connectors'],
     install_requires=[
-        "Mechanize",
         "beautifulsoup4",
         "awesome-slugify",
         "appdirs",
-        "wget",
+        "colorama",
+        "termcolor",
     ],
     url='www.umutkarci.com',
     license='GPL v2',
@@ -19,7 +19,7 @@ setup(
     description='A manga download manager.',
     entry_points={
         'console_scripts': [
-            'garganta = garganta.__main__:main'
+            'garganta = garganta.main:main'
         ]
     },
 )

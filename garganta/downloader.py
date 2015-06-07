@@ -1,49 +1,47 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-__author__ = 'Umut Karci'
 
-from collections import deque
-from wget import download
 from multiprocessing.pool import ThreadPool
 from threading import current_thread
 from functools import partial
+import os
+from urllib.request import urlretrieve
 
-download_list = deque()
-done_downloads = 0
-pool = ThreadPool(3)
+from garganta.settings import settings
+from garganta.utils import fix_type
 
-bar_dict = {}
-prev_line_len = 0
-
-
-def general_bar(current, total, _=None, name=None, thread=None):
-    global bar_dict, prev_line_len, done_downloads
-    bar_dict[thread] = name, current, total
-    bar = u"".join(map(lambda x:
-                      u"[{file} {current}KiB/{total}KiB({percent}%)]".format(
-                          file=x[0], current=x[1] / 1024, total=x[2] / 1024,
-                          percent=x[1] * 100 / x[2]),
-                      bar_dict.values()))
-    bar += " Queue = {}".format(len(download_list) - done_downloads)
-    print("\r" * prev_line_len, end="")
-    line_len = len(bar)
-    if prev_line_len > len(bar):
-        bar += " " * (prev_line_len - len(bar))
-    print(bar, end="")
-    prev_line_len = line_len
+pool = ThreadPool(settings["poolsize"])
 
 
 def download_worker(q):
-    global done_downloads
-    url, path = q
-    br = partial(general_bar, name=url.split("/")[-1], thread=current_thread())
-    download(url, path, br)
-    done_downloads += 1
+    page, path = q
+    filename = page.url.split("/")[-1]
+    file_full_path = os.path.join(path, filename)
+    br = partial(settings["downloadbar"],
+                 name=filename,
+                 thread=current_thread())
+    saved, _ = urlretrieve(page.url, file_full_path, br)
+    fix_type(saved)
+    settings["done"] += 1
 
 
 def stop_download():
     pool.join()
 
 
-def start_download():
-    pool.map(download_worker, download_list)
+def start_download(async=False, callback=None):
+    def _callback(*args, **kwargs):
+        settings["queue"].clear()
+        settings["done"] = 0
+        if callback is not None:
+            return callback(*args, **kwargs)
+        else:
+            return None
+
+    results = pool.map_async(download_worker,
+                             settings["queue"],
+                             callback=_callback)
+    if not async:
+        results.get()
+        settings["queue"].clear()
+        settings["done"] = 0
